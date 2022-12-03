@@ -17,13 +17,13 @@ public class OrderController {
     private OrderService orderService;
 
     @PreAuthorize("hasAuthority('Customer')")
-    @PostMapping("/placeOrder")
+    @PostMapping
     public ResponseEntity<Long> placeOrder(@RequestBody OrderRequest orderRequest) {
         long orderId = orderService.placeOrder(orderRequest);
         return new ResponseEntity<>(orderId, HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasAuthority('Admin') || hasAuthority('Customer') || hasAuthority('SCOPE_internal')")
+    @PreAuthorize("hasAuthority('Admin') || hasAuthority('Customer')")
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrderByOrderId(@PathVariable long orderId) {
         OrderResponse orderResponse = orderService.getOrderByOrderId(orderId);
