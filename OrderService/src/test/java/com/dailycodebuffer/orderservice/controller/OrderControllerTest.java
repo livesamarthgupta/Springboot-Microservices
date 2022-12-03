@@ -59,7 +59,7 @@ class OrderControllerTest {
             .options(WireMockConfiguration.wireMockConfig().port(8080))
             .build();
 
-    private ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules()
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules()
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -72,7 +72,7 @@ class OrderControllerTest {
     }
 
     private void reduceQuantity() {
-        wireMockServer.stubFor(put(urlMatching("/product/reduceQuantity/.*"))
+        wireMockServer.stubFor(put(urlMatching("/product/.*"))
                 .willReturn(aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)));
@@ -128,8 +128,7 @@ class OrderControllerTest {
                 = objectMapper.readValue(
                 copyToString(
                         OrderControllerTest.class.getClassLoader()
-                                .getResourceAsStream("mock/GetPayment.json"
-                                ),
+                                .getResourceAsStream("mock/GetPayment.json"),
                         defaultCharset()
                 ), OrderResponse.PaymentDetails.class
         );
@@ -185,8 +184,7 @@ class OrderControllerTest {
     @DisplayName("POST /order - Wrong Access Scenario")
     void testPlaceOrderWithWrongAccess() throws Exception {
         OrderRequest orderRequest = getMockOrderRequest();
-        MvcResult mvcResult = mockMvc
-                .perform(MockMvcRequestBuilders
+        mockMvc.perform(MockMvcRequestBuilders
                         .post("/order")
                         .with(jwt().authorities(new SimpleGrantedAuthority("Admin")))
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
@@ -196,15 +194,17 @@ class OrderControllerTest {
     }
 
     @Test
+    @DisplayName("GET /order - Success Scenario")
     void testGetOrderSuccess() throws Exception {
         MvcResult mvcResult
-                = mockMvc.perform(MockMvcRequestBuilders.get("/order/0")
-                        .with(jwt().authorities(new SimpleGrantedAuthority("Admin")))
+                = mockMvc.perform(MockMvcRequestBuilders.get("/order/1")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("Customer")))
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn();
 
         String actualResponse = mvcResult.getResponse().getContentAsString();
+        System.out.println(actualResponse);
         Order order = orderRepository.findById(0L).get();
         String expectedResponse = getOrderResponse(order);
 
@@ -212,9 +212,9 @@ class OrderControllerTest {
     }
 
     @Test
-    public void testGetOrderFailure() throws Exception {
-        MvcResult mvcResult
-                = mockMvc.perform(MockMvcRequestBuilders.get("/order/1")
+    @DisplayName("GET /order - Not Found Scenario")
+    void testGetOrderFailure() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/order/2")
                         .with(jwt().authorities(new SimpleGrantedAuthority("Admin")))
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
