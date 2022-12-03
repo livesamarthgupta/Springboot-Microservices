@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: 8080
 
 spring:
   application:
@@ -14,7 +14,7 @@ spring:
     hibernate:
       ddl-auto: update
   config:
-    import: configserver:http://localhost:9296
+    import: configserver:http://${CONFIG_SERVER_URL:localhost}:9296
 
 #  eureka:
 #    instance:
