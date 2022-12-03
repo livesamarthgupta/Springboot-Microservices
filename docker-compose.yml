@@ -1,0 +1,68 @@
+version: '3'
+services:
+  serviceregistry:
+    image: 'livesamarth/serviceregistry:latest'
+    container_name: service-registry
+    ports:
+      - '8761:8761'
+  configserver:
+    image: 'livesamarth/configserver:latest'
+    container_name: config-server
+    ports:
+      - '9296:9296'
+    environment:
+      - EUREKA_SERVER_ADDRESS=http://serviceregistry:8761/eureka
+    depends_on:
+      - serviceregistry
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://configserver:9296/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  cloudgateway:
+    image: 'livesamarth/cloudgateway:latest'
+    container_name: cloud-gateway
+    ports:
+      - '9090:9090'
+    environment:
+      - EUREKA_SERVER_ADDRESS=http://serviceregistry:8761/eureka
+      - CONFIG_SERVER_URL=configserver
+    depends_on:
+      configserver:
+        condition: service_healthy
+  orderservice:
+    image: 'livesamarth/orderservice:latest'
+    container_name: order-service
+    ports:
+      - '8080:8080'
+    environment:
+      - EUREKA_SERVER_ADDRESS=http://serviceregistry:8761/eureka
+      - CONFIG_SERVER_URL=configserver
+      - DB_HOST=host.docker.internal
+    depends_on:
+      configserver:
+        condition: service_healthy
+  paymentservice:
+    image: 'livesamarth/paymentservice:latest'
+    container_name: payment-service
+    ports:
+      - '8081:8080'
+    environment:
+      - EUREKA_SERVER_ADDRESS=http://serviceregistry:8761/eureka
+      - CONFIG_SERVER_URL=configserver
+      - DB_HOST=host.docker.internal
+    depends_on:
+      configserver:
+        condition: service_healthy
+  productservice:
+    image: 'livesamarth/productservice:latest'
+    container_name: product-service
+    ports:
+      - '8082:8080'
+    environment:
+      - EUREKA_SERVER_ADDRESS=http://serviceregistry:8761/eureka
+      - CONFIG_SERVER_URL=configserver
+      - DB_HOST=host.docker.internal
+    depends_on:
+      configserver:
+        condition: service_healthy
