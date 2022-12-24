@@ -4,8 +4,11 @@ server:
 spring:
   application:
     name: API-GATEWAY
+  redis:
+    host: redis
+    port: 6379
   config:
-    import: configserver:http://${CONFIG_SERVER_URL:localhost}:9296
+    import: configserver:${CONFIG_SERVER_URL:http://localhost:9296}
   cloud:
     gateway:
       routes:
